@@ -1,0 +1,60 @@
+substitutions:
+  _REGION: us-east1
+  _REPO_ARTIFACT: repo-calculadora-comercial
+  _IMAGE_REPO: do-api-calculadora-comercial
+  _SERVICE_NAME: do-api-calculadora-comercial
+  _SERVICE_ACCOUNT: "" # se reemplaza desde el trigger
+  _PROJECT_ID: sb-xops-stage
+  _ENVIRONMENT: stage 
+
+steps:
+  - name: 'gcr.io/cloud-builders/gcloud'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        echo "${_REGION}" > region.txt
+        echo "${_REPO_ARTIFACT}" > repo_artifact.txt
+        echo "${_IMAGE_REPO}" > image_repo.txt
+        echo "${_SERVICE_NAME}" > service_name.txt
+        echo "$(cat region.txt)-docker.pkg.dev/${_PROJECT_ID}/$(cat repo_artifact.txt)/$(cat image_repo.txt):latest" > image_name.txt
+
+  - name: 'gcr.io/cloud-builders/gcloud'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        if gcloud artifacts repositories describe "$(cat repo_artifact.txt)" --location="$(cat region.txt)" >/dev/null 2>&1; then
+          echo "Repositorio ya existe."
+        else
+          echo "Creando repositorio..."
+          gcloud artifacts repositories create "$(cat repo_artifact.txt)" \
+            --location "$(cat region.txt)" \
+            --description "Repositorio para API Calculadora Comercial" \
+            --repository-format="DOCKER"
+        fi
+
+  - name: 'gcr.io/cloud-builders/docker'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        docker build -t "$(cat image_name.txt)" .
+        docker push "$(cat image_name.txt)"
+
+  - name: 'gcr.io/cloud-builders/gcloud'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        gcloud run deploy "$(cat service_name.txt)" \
+          --image "$(cat image_name.txt)" \
+          --region "$(cat region.txt)" \
+          --project "${_PROJECT_ID}" \
+          --platform managed \
+          --service-account "${_SERVICE_ACCOUNT}" \
+          --set-env-vars=PROJECT_ID=${_PROJECT_ID},ENVIRONMENT=${_ENVIRONMENT} \
+          --labels billing-tags=do-api-calculadora-comercial
+
+options:
+  logging: CLOUD_LOGGING_ONLY
