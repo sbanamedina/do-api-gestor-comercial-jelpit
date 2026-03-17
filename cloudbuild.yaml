@@ -1,8 +1,8 @@
 substitutions:
   _REGION: us-east1
-  _REPO_ARTIFACT: repo-calculadora-comercial
-  _IMAGE_REPO: do-api-calculadora-comercial
-  _SERVICE_NAME: do-api-calculadora-comercial
+  _REPO_ARTIFACT: repo-gestor-comercial-jelpit
+  _IMAGE_REPO: do-api-gestor-comercial-jelpit
+  _SERVICE_NAME: do-api-gestor-comercial-jelpit
   _SERVICE_ACCOUNT: "" # se reemplaza desde el trigger
   _PROJECT_ID: sb-xops-stage
   _ENVIRONMENT: stage 
@@ -30,7 +30,7 @@ steps:
           echo "Creando repositorio..."
           gcloud artifacts repositories create "$(cat repo_artifact.txt)" \
             --location "$(cat region.txt)" \
-            --description "Repositorio para API Calculadora Comercial" \
+            --description "Repositorio para API Gestor Comercial JELPIT" \
             --repository-format="DOCKER"
         fi
 
@@ -54,7 +54,7 @@ steps:
           --platform managed \
           --service-account "${_SERVICE_ACCOUNT}" \
           --set-env-vars=PROJECT_ID=${_PROJECT_ID},ENVIRONMENT=${_ENVIRONMENT} \
-          --labels billing-tags=do-api-calculadora-comercial
+          --labels billing-tags=do-api-gestor-comercial-jelpit
 
 options:
   logging: CLOUD_LOGGING_ONLY
